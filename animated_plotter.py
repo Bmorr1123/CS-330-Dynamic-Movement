@@ -18,7 +18,7 @@ def distance(x1, y1, x2, y2):
     return ((x2 - x1) ** 2 + (y2 - y1) ** 2) ** (1/2)
 
 # Change this to data file name
-def render(program_name, create_gif=True):
+def render(program_name, create_gif=True, extents=100):
     folder_name = f"output_data/{program_name}"
     frame_name = f"{folder_name}/trajectories.txt"
     paths_file = f"{folder_name}/paths.txt"
@@ -41,7 +41,7 @@ def render(program_name, create_gif=True):
         "blue",
         "magenta"
     ]
-    line_thickness = 1
+    line_thickness = 0.5
     constant = 3
 
     print("Loading data.")
@@ -63,38 +63,42 @@ def render(program_name, create_gif=True):
 
     movers = {}  # create dictionary to store different movers
     time_entries = [0.0]
-    with open(frame_name, 'r') as csvfile:
-        csvreader = csv.reader(csvfile)
+    try:
+        with open(frame_name, 'r') as csvfile:
+            csvreader = csv.reader(csvfile)
 
-        for row in csvreader:
-            if float(row[0]) != time_entries[-1]:
-                time_entries.append(float(row[0]))
+            for row in csvreader:
+                if float(row[0]) != time_entries[-1]:
+                    time_entries.append(float(row[0]))
 
-            # If we find a new mover
-            if row[1] not in movers:
-                movers[row[1]] = Mover(int(row[9]))  # add a new one to the dictionary
+                # If we find a new mover
+                if row[1] not in movers:
+                    movers[row[1]] = Mover(int(row[9]))  # add a new one to the dictionary
 
-            # Grabbing the Mover object from the dict
-            m = movers[row[1]]
+                # Grabbing the Mover object from the dict
+                m = movers[row[1]]
 
-            # Position Data
-            m.x.append(float(row[2]))  # Position Y
-            m.z.append(float(row[3]))  # Position Z
+                # Position Data
+                m.x.append(float(row[2]))  # Position Y
+                m.z.append(float(row[3]))  # Position Z
 
-            # Velocity Data
-            # (multiplied by constants to increase visibility)
-            m.vXp.append((float(row[4]) * constant) + float(row[2]))  # Velocity X
-            m.vZp.append((float(row[5]) * constant) + float(row[3]))  # Velocity Z
+                # Velocity Data
+                # (multiplied by constants to increase visibility)
+                m.vXp.append((float(row[4]) * constant) + float(row[2]))  # Velocity X
+                m.vZp.append((float(row[5]) * constant) + float(row[3]))  # Velocity Z
 
-            # Acceleration Data
-            m.laXp.append((float(row[6])) * constant + float(row[2]))  # Linear Acceleration X
-            m.laZp.append((float(row[7])) * constant + float(row[3]))  # Linear Acceleration Z
+                # Acceleration Data
+                m.laXp.append((float(row[6])) * constant + float(row[2]))  # Linear Acceleration X
+                m.laZp.append((float(row[7])) * constant + float(row[3]))  # Linear Acceleration Z
 
-            m.oXp.append((math.cos(float(row[8]))) + float(row[2]))  # Orientation X
-            m.oZp.append((math.sin(float(row[8]))) + float(row[3]))  # Orientation Z
+                m.oXp.append((math.cos(float(row[8]))) + float(row[2]))  # Orientation X
+                m.oZp.append((math.sin(float(row[8]))) + float(row[3]))  # Orientation Z
+    except FileNotFoundError:
+        print(f"Trajectories data file could not be found at \"{points_file}\"")
 
     # ----------------------------------------------------------------------------------------- Path Data Processing ---
     paths_data = []
+    lines_data = []
 
     # The formatting of path files should be:
     #    path, id, point0x, point0y, point1x, point1y, ...
@@ -111,6 +115,10 @@ def render(program_name, create_gif=True):
                     paths_data.append([])
                     for i in range(2, len(row), 2):
                         paths_data[int(row[1])].append([int(row[i]), int(row[i + 1])])
+
+                if row[0] == "line":
+                    lines_data.append([(int(row[1]), int(row[2])), (int(row[3]), int(row[4]))])
+
     except FileNotFoundError:
         print(f"Paths data file could not be found at \"{paths_file}\"")
     # ------------------------------------------------------------------------------ Temporary Point Data Processing ---
@@ -130,11 +138,28 @@ def render(program_name, create_gif=True):
 
     print(f"Loaded data in {time.time() - start_time:.3f}s")
 
-    # ************************** Setup Plotting Axis ****************************
-    xLineX = [-100, 100]
+    # --------------------------------------------------------------------------------------------------- Plot Setup ---
+
+    plt.xlabel('X')
+    plt.ylabel('Z')
+    plt.title(PLOT_TITLE)
+
+    # create legend
+    plt.plot(0, 0, color='red', label='position')
+    plt.plot(0, 0, color='green', label='velocity')
+    plt.plot(0, 0, color='blue', label='linear')
+    if do_orientation:
+        plt.plot(0, 0, color='yellow', label='orientation')
+
+    plt.legend(loc='best')
+    extents = (-extents, extents)
+    plt.xlim(*extents)
+    plt.ylim(*extents)
+
+    xLineX = extents
     xLineY = [0, 0]
     yLineX = [0, 0]
-    yLineY = [-100, 100]
+    yLineY = extents
     plt.figure(figsize=(6, 6))
 
     # add dashed grey lines
@@ -158,23 +183,11 @@ def render(program_name, create_gif=True):
         for i, length in enumerate(lengths):
             sum_of_lengths += length / total_length
             point = path_points[i + 1]
-            plt.annotate(f"{sum_of_lengths:.2f}", color='grey', xy=point)
+            # plt.annotate(f"{sum_of_lengths:.2f}", color='grey', xy=(point[0] - 10, point[1] + 10))
             # plt.plot(*path_points[i], color='grey')
-
-    # create legend
-    plt.plot(0, 0, color='red', label='position')
-    plt.plot(0, 0, color='green', label='velocity')
-    plt.plot(0, 0, color='blue', label='linear')
-    if do_orientation:
-        plt.plot(0, 0, color='yellow', label='orientation')
-
-    # format plot
-    plt.xlabel('X')
-    plt.ylabel('Z')
-    plt.title(PLOT_TITLE)
-    plt.legend(loc='best')
-    plt.xlim(-100, 100)
-    plt.ylim(100, -100)
+    # ----------------------------------------------------------------------------------------------- Line Rendering ---
+    for line in lines_data:
+        plt.plot([line[0][0], line[1][0]], [line[0][1], line[1][1]], xLineY, color='black', linewidth=1)
 
     for mov in movers:
         m = movers[mov]
@@ -199,6 +212,8 @@ def render(program_name, create_gif=True):
     if create_gif:
         print(f"Generating {len(time_entries)} frames.")
     start_time = time.time()
+
+    # ----------------------------------------------------------------------------------------- Trajectory Rendering ---
     for t in range(len(time_entries)):
         for u in range(len(movers_list)):
             mover = movers_list[u]
@@ -224,6 +239,7 @@ def render(program_name, create_gif=True):
 
                 plt.plot(i, j, color='yellow', linewidth=line_thickness)
 
+            # Position
             if t + 1 < len(mover.x):
                 i = [x_pos, mover.x[t + 1]]  # current x, next x
                 j = [z_pos, mover.z[t + 1]]  # current z, next z
@@ -241,7 +257,7 @@ def render(program_name, create_gif=True):
                     )
 
             frame_name = f"frames/frame_{t:03}.png"
-            plt.savefig(frame_name, dpi=200)
+            plt.savefig(frame_name, dpi=50)
             frame_names.append(frame_name)
 
             for thing in remove_from_final:

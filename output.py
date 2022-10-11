@@ -74,6 +74,12 @@ class OutputManager:
             self.data["paths"] += "\n"
             self._path_count += 1
 
+    def write_line(self, point1, point2):
+        if "paths" not in self.data:
+            self.data["paths"] = ""
+
+        self.data["paths"] += f"line, {point1[0]}, {point1[1]}, {point2[0]}, {point2[1]}\n"
+
     def write_temporary_point(self, time, x: float, y: float):
         if "points" not in self.data:
             self.data["points"] = ""

@@ -21,8 +21,8 @@ class Path:
         self.points: [Vector] = [Vector(*point) for point in points]
 
         distances = [(self.points[i + 1] - self.points[i]).magnitude() for i in range(len(self.points) - 1)]
-        path_length = sum(distances)
-        self.relative_distances = [distance / path_length for distance in distances]
+        self.path_length = sum(distances)
+        self.relative_distances = [distance / self.path_length for distance in distances]
 
     def get_param(self, position: Vector) -> float:
 

@@ -74,7 +74,7 @@ class Mover(Target):
         self.velocity += self.linear_acceleration * delta
         self.rotation += self.angular_acceleration * delta
 
-        if self.velocity.magnitude() > self.max_speed:
+        if self.max_speed != 0 and self.velocity.magnitude() > self.max_speed:
             self.velocity = self.velocity.normalize() * self.max_speed
 
     movement_id = property(get_movement_behavior_id)

@@ -17,11 +17,20 @@ class Simulation:
 
         self.movers = movers
         self.time_step = time_step
+
+        if not paths:
+            paths = []
         self.paths = paths
 
         self._total_time = 0
 
         self.output_manager: OutputManager = OutputManager.get_output_manager(f"output_data/{sim_name}")
+
+    def add_mover(self, mover: Mover):
+        self.movers.append(mover)
+
+    def add_path(self, path):
+        self.paths.append(path)
 
     def generate_line(self, time, mover: Mover):
         """

@@ -164,19 +164,17 @@ class FollowPath(Seek):
 
         # Closest point on path
         # closest_point_on_path = self.path.get_position(self.current_param)
-        self.output_manager.write_temporary_point(self.time, closest_point_on_path.x, closest_point_on_path.y)
+        # self.output_manager.write_temporary_point(self.time, closest_point_on_path.x, closest_point_on_path.y)
 
         # Making us a little further along the path
         self.current_param += self.path_offset
 
         # Finding the target point
         self.target.position = self.path.get_position(self.current_param)
-        self.output_manager.write_temporary_point(self.time, self.target.position.x, self.target.position.y)
+        # self.output_manager.write_temporary_point(self.time, self.target.position.x, self.target.position.y)
 
         # Distance between closest point and target point
         distance_to = (closest_point_on_path - self.target.position).magnitude()
-        if distance_to > 1:
-            print(f"Distance between closest and target: {distance_to:5.2f}")
 
         # Distance to target
         # distance_to = (self.target.position - self.character.position).magnitude()

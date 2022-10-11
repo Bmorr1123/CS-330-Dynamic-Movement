@@ -97,6 +97,12 @@ class Vector:
         assert 0 <= percentage <= 1
         return other * percentage + self * (1 - percentage)
 
+    def as_tuple(self):
+        return tuple(self.values)
+
+    def as_int_tuple(self):
+        return (int(value) for value in self.values)
+
     x = property(get_x)
     y = property(get_y)
     z = property(get_z)
